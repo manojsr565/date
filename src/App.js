@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Heart, Smile, Frown, Sparkles, CalendarDays, Coffee, Utensils, Gamepad2, Tv, Fish, CheckCircle } from 'lucide-react';
 
 const App = () => {
@@ -6,8 +6,9 @@ const App = () => {
   const [dateName, setDateName] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedActivities, setSelectedActivities] = useState([]);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
-  // Activity options with their icons
+  // Activity options with their Lucide React icons
   const activityOptions = [
     { name: 'Coffee', icon: Coffee },
     { name: 'Dinner', icon: Utensils },
@@ -17,37 +18,23 @@ const App = () => {
     { name: 'Movie', icon: Tv },
   ];
 
-  // Function to generate the calendar for the current month
-  const generateCalendar = () => {
+  // Function to get the days for the specified week offset
+  const getDaysForWeek = (offset) => {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const numDays = lastDay.getDate();
-    const startDayOfWeek = firstDay.getDay();
+    today.setHours(0, 0, 0, 0);
 
-    const calendarDays = [];
-    for (let i = 0; i < startDayOfWeek; i++) {
-      calendarDays.push(null);
-    }
-    for (let i = 1; i <= numDays; i++) {
-      calendarDays.push(i);
-    }
+    const weekDays = [];
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() + (offset * 7));
 
-    const rows = [];
-    let cells = [];
-    calendarDays.forEach((day, index) => {
-      if (index > 0 && index % 7 === 0) {
-        rows.push(cells);
-        cells = [];
-      }
-      cells.push(day);
-    });
-    if (cells.length > 0) {
-      rows.push(cells);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      weekDays.push(day);
     }
-    return rows;
+    return weekDays;
   };
 
   const handleActivityChange = (activityName) => {
@@ -58,15 +45,17 @@ const App = () => {
     );
   };
 
-  // Render different pages based on currentPage state
   const renderContent = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     switch (currentPage) {
       case 'home':
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-8 animate-fade-in">
             <h1 className="text-6xl font-extrabold text-white drop-shadow-lg animate-pulse-once">Welcome!</h1>
             <p className="text-2xl text-white font-medium drop-shadow-md">
-              "Every moment with you is a new adventure, and I can't wait for our time together."
+              "Every moment with you is a new adventure, and I can't wait for our next chapter."
             </p>
             <div className="flex space-x-6">
               <button
@@ -190,6 +179,9 @@ const App = () => {
         );
 
       case 'nameInput':
+        const currentWeekDays = getDaysForWeek(currentWeekOffset);
+        const displayMonthYear = currentWeekDays[0].toLocaleString('default', { month: 'long', year: 'numeric' });
+
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-8 animate-fade-in">
             <Smile size={96} className="text-green-400 animate-bounce-in" />
@@ -204,12 +196,24 @@ const App = () => {
               onChange={(e) => setDateName(e.target.value)}
             />
             <p className="text-3xl text-white font-medium drop-shadow-md">
-              Now, let's pick a date from the current month!
+              Now, let's pick a date from the calendar!
             </p>
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
               <div className="text-xl font-bold text-gray-800 mb-4 flex justify-between items-center">
-                <span>{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                <CalendarDays size={24} />
+                <button
+                  onClick={() => setCurrentWeekOffset(prev => Math.max(0, prev - 1))}
+                  className={`p-2 rounded-full ${currentWeekOffset === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-200'}`}
+                  disabled={currentWeekOffset === 0}
+                >
+                  &larr; Prev Week
+                </button>
+                <span>{displayMonthYear}</span>
+                <button
+                  onClick={() => setCurrentWeekOffset(prev => prev + 1)}
+                  className="p-2 rounded-full text-gray-700 hover:bg-gray-200"
+                >
+                  Next Week &rarr;
+                </button>
               </div>
               <div className="grid grid-cols-7 gap-2 text-gray-700 font-semibold mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -217,24 +221,34 @@ const App = () => {
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-2">
-                {generateCalendar().flat().map((day, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      if (day) {
-                        setSelectedDate(day);
-                        setCurrentPage('activitySelection');
-                      }
-                    }}
-                    className={`p-2 rounded-lg text-center font-medium
-                      ${day ? 'bg-pink-100 text-pink-700 hover:bg-pink-200 cursor-pointer transition duration-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
-                      ${selectedDate === day ? 'ring-2 ring-pink-500' : ''}
-                    `}
-                    disabled={!day}
-                  >
-                    {day}
-                  </button>
-                ))}
+                {currentWeekDays.map((day, index) => {
+                  const isPastDay = day < today; // Check if the day is before today
+                  const isToday = day.toDateString() === today.toDateString(); // Check if it's today
+                  const isSelectable = day >= today && day.getTime() <= (today.getTime() + (6 * 24 * 60 * 60 * 1000)); // Today + next 6 days
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (!isPastDay && isSelectable) { // Only allow selection of today or future within 7 days
+                          setSelectedDate(day);
+                          setCurrentPage('activitySelection');
+                        }
+                      }}
+                      className={`p-2 rounded-lg text-center font-medium
+                        ${isPastDay ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : ''}
+                        ${!isPastDay && !isSelectable ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : ''}
+                        ${isSelectable && !isPastDay && !isToday ? 'bg-pink-100 text-pink-700 hover:bg-pink-200 cursor-pointer transition duration-200' : ''}
+                        ${isToday ? 'bg-green-300 text-green-900 font-bold border-2 border-green-500' : ''}
+                        ${selectedDate && selectedDate.toDateString() === day.toDateString() ? 'ring-2 ring-pink-500' : ''}
+                        ${!isSelectable || isPastDay ? 'opacity-50' : ''}
+                      `}
+                      disabled={isPastDay || !isSelectable} // Disable past and outside 7-day window
+                    >
+                      {day.getDate()}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -252,7 +266,8 @@ const App = () => {
                 <label
                   key={activity.name}
                   className={`flex flex-col items-center p-4 bg-white rounded-lg shadow-lg cursor-pointer transition duration-200 transform hover:scale-105
-                    ${selectedActivities.includes(activity.name) ? 'ring-4 ring-pink-500' : ''}`}
+                    ${selectedActivities.includes(activity.name) ? 'ring-4 ring-green-500' : ''}
+                  `}
                 >
                   <input
                     type="checkbox"
@@ -275,10 +290,8 @@ const App = () => {
         );
 
       case 'summary':
-        const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
-        const currentYear = new Date().getFullYear();
-        const fullDate = selectedDate ? `${currentMonthName} ${selectedDate}, ${currentYear}` : 'a date not chosen yet';
         const activitiesText = selectedActivities.length > 0 ? selectedActivities.join(', ') : 'nothing specific yet (you can always decide later!)';
+        const formattedDate = selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'a date not chosen yet';
 
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-8 animate-fade-in">
@@ -287,7 +300,7 @@ const App = () => {
               It's a Date!
             </h2>
             <p className="text-2xl text-white font-medium drop-shadow-md">
-              Max is going on a date with <span className="font-bold text-pink-300">{dateName || 'someone special'}</span> on <span className="font-bold text-pink-300">{fullDate}</span> to <span className="font-bold text-pink-300">{activitiesText}</span>!
+              Max is taking you out on a date with <span className="font-bold text-pink-300">{dateName || 'someone special'}</span> on <span className="font-bold text-pink-300">{formattedDate}</span> to <span className="font-bold text-pink-300">{activitiesText}</span>!
             </p>
             <p className="text-xl text-white drop-shadow-md">
               Get ready for an amazing time!
@@ -298,6 +311,7 @@ const App = () => {
                 setDateName('');
                 setSelectedDate(null);
                 setSelectedActivities([]);
+                setCurrentWeekOffset(0);
               }}
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg mt-8 transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 button-press-effect"
             >
