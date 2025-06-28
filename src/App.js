@@ -66,7 +66,7 @@ const App = () => {
           <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-8 animate-fade-in">
             <h1 className="text-6xl font-extrabold text-white drop-shadow-lg animate-pulse-once">Welcome!</h1>
             <p className="text-2xl text-white font-medium drop-shadow-md">
-              "Every moment with you is a new adventure, and I can't wait for our next chapter."
+              "Every moment with you is a new adventure, and I can't wait for our time together."
             </p>
             <div className="flex space-x-6">
               <button
@@ -119,7 +119,7 @@ const App = () => {
                 onClick={() => setCurrentPage('maybe')}
                 className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 button-press-effect"
               >
-                Maybe
+                Maybe?
               </button>
               <button
                 onClick={() => setCurrentPage('sad')}
@@ -149,7 +149,7 @@ const App = () => {
                 onClick={() => setCurrentPage('thanksForTrying')}
                 className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 button-press-effect"
               >
-                Nah
+                Nah!
               </button>
             </div>
           </div>
@@ -287,7 +287,7 @@ const App = () => {
               It's a Date!
             </h2>
             <p className="text-2xl text-white font-medium drop-shadow-md">
-              You are going on a date with <span className="font-bold text-pink-300">{dateName || 'someone special'}</span> on <span className="font-bold text-pink-300">{fullDate}</span> to <span className="font-bold text-pink-300">{activitiesText}</span>!
+              Max is going on a date with <span className="font-bold text-pink-300">{dateName || 'someone special'}</span> on <span className="font-bold text-pink-300">{fullDate}</span> to <span className="font-bold text-pink-300">{activitiesText}</span>!
             </p>
             <p className="text-xl text-white drop-shadow-md">
               Get ready for an amazing time!
